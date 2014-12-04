@@ -1,9 +1,0 @@
-FROM ubuntu:14.04
-MAINTAINER indi
-
-#Commands
-#Basic
-RUN apt-get update
-#Python
-RUN sudo apt-get install python-dev
-
