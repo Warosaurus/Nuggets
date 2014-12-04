@@ -1,0 +1,9 @@
+FROM ubuntu:14.04
+MAINTAINER indi
+
+#Commands
+#Basic
+RUN apt-get update
+#SQLite
+RUN sudo apt-get installl SQLite3
+
