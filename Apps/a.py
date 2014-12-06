@@ -18,4 +18,13 @@ if __name__== "__main__":
 	print "mem size: {}".format(len(mem))
 	zcpu = stats.zscore(cpu)
 	zmem = stats.zscore(mem)
+	#Graph
+	fig = Figure()
+	gcpu = fig.add_subplot(1, 1, 1)
+	gmem = fig.add_subplot(2, 1, 1)
 	
+	gcpu.plot(cpu)
+	gmem.plot(mem)
+
+	FigureCanvasAgg(fig).print_png('webapp.png', dpi=150)
+	                                
