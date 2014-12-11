@@ -2,10 +2,10 @@ FROM ubuntu:localbase
 MAINTAINER warosaurus
 
 RUN apt-get install -y sqlite3
-RUN mkdir /opt/DB/
-RUN cd /opt/DB/ && sqlite3 base.db < ~/Nuggets/Docker/ubuntuSQLite/db.sql
+RUN mkdir /home/db/ /home/local
+RUN cd /home/db/ && sqlite3 base.db < /home/Nuggets/Docker/ubuntuSQLite/db.sql
 
-VOLUME ["/opt/DB"]
+VOLUME ["/home/db/"]
 
 #Empty the cache to save space.
 RUN apt-get autoclean
