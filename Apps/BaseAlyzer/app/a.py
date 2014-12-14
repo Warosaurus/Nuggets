@@ -13,7 +13,7 @@ if __name__== "__main__":
 	conf = config()
 	if conf.i and conf.u and conf.p:
 		ftp = FTP(conf.i)
-		ftp.login(c.u, c.p)
+		ftp.login(conf.u, conf.p)
 		ftp.cwd("datatransport/host01/")
 		
 		#TODO
@@ -36,6 +36,6 @@ if __name__== "__main__":
 		spikes = [x for x,y in zip(hcpu, hmem) if x == y]
 		
 		#Go to sleep here
-	                                
+		ftp.quit()
 	else:
 		print "Config could not be created, please check README."
