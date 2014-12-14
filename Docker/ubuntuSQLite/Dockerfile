@@ -12,3 +12,4 @@ RUN apt-get autoclean
 #Run final command
 #Add - create database/tables
 
+CMD ["true"]
