@@ -6,7 +6,7 @@ import os.path
 class Config:
 	def __init__(self):
 		self.i, self.u, self.p = "","","" #Defaults
-		self.db = "/tmp/db/base.db"
+		self.db = "/var/db/base.db"
 		if os.path.isfile(".auth"):
 			f = open(".auth", "r").readlines()
 			self.i = f[0].split(':')[1].strip()

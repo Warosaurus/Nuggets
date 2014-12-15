@@ -2,9 +2,11 @@
 #@Author Warosaurus
 
 from config import Config
-from core import Process
+from core import Process, Visualize
 
 if __name__ == "__main__":
 	c = Config()
 	p = Process()
-	p.run(c)
+	p.run(c)	#Pass configuration settings
+	v = Visualize()
+	v.run(c.d) 	#Pass configuration db location
