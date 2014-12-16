@@ -9,4 +9,4 @@ if __name__ == "__main__":
 	p = Process()
 	p.run(c)	#Pass configuration settings
 	v = Visualize()
-	v.run(c.d) 	#Pass configuration db location
+	v.run(c.db, c.plot) 	#Pass configuration db location

@@ -36,7 +36,7 @@ class Process:
 				fname = '/tmp/temp.txt'
 				log.info('Starting processing for {} files.'.format(len(flist)))
 				for n in flist:
-					print n
+					print (n)
 					f = open(fname, 'w+')
 					try:
 						ftp.retrbinary('RETR %s' % n, f.write)
