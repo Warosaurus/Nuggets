@@ -30,57 +30,58 @@ class Process:
 				#Let's begin!
 				#Get date yesterday 5
 				dayz = [str(dt.date.today() - dt.timedelta(days=x)) for x in list(reversed(range(2,7)))] #Test
+				ftp.cwd("datatransport/host01/")
+				fname = '/tmp/temp.txt'
 				for day_sep in dayz:
 					print day_sep
 #					day_sep = str(dt.date.today() - dt.timedelta(days=1))
 					day_pln = day_sep.replace('-','')
 					#Change ftp directory *host01*
-					ftp.cwd("datatransport/host01/")
 					#Get list of files to be processed
 					flist = [x for x in ftp.nlst()[2:] if re.search(day_sep,x)]
 					#Process the files
-					fname = '/tmp/temp.txt'
 					spikes = 0
 					log.info('Starting processing for {}.'.format(day_sep))
 					for n in flist:
 						print (n)
 						f = open(fname, 'w+')
-#						try:
-						#Download the file
-						ftp.retrbinary('RETR %s' % n, f.write)
-						#Open the file for reading
-						f = open(fname, 'r')
-						ncpu = np.array([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfCPU", l)])
-						f.seek(0) #Return f to the top of the file
-						nmem = np.array([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match('HOST-RESOURCES-MIB::hrSWRunPerfMem', l)])
-						#Find zscores of each value relative to the mean and std. dev.
-						zcpu = stats.zscore(ncpu)
-						zmem = stats.zscore(nmem)
-						#Get the position of the values where the abs. zscore is greater than 2.5 (~97%)
-						hcpu = np.array([i for i,n in enumerate(zcpu) if (np.absolute(n) >= 2.5)])
-						hmem = np.array([i for i,n in enumerate(zmem) if (np.absolute(n) >= 2.5)])
-						#Get where the values for each catagory are within the ~97%
-						spikes = spikes + len([x for x,y in zip(hcpu, hmem) if x == y])
-						if len(ncpu) != len(nmem): #Curious to see if there are any files where the number of memory and cpu perf differs
-							log.info('Length of values in memory and cpu are not identical in file: {}'.format(n))					
-#						except Exception as e:
-#							log.warning('Error: {} file: {}'.format(e,n))
-						#Clean up file, ready for next
-						os.remove(fname)
-					#Deal with events information
-					res = url.urlopen('http://data.gdeltproject.org/events/index.html').read().split('<LI>')[4:]
-					fil = [x for x in res if (day_pln in x)][0].split('>')[1].split('<')[0]
-					#Download events file
-					dwnlod = url.urlopen('http://data.gdeltproject.org/events/'+fil)
-					with open('/tmp/' + fil, 'w+') as f:
-						f.write(dwnlod.read())
-					with z.ZipFile('/tmp/'+fil) as zf:
-						zf.extractall('/tmp/')
-					#Get all the lines that match
-					events = len([x for x in open('/tmp/'+day_pln+'.export.CSV') if (re.search('Netherlands', x))])
-					#Store results
-					cur.execute('INSERT INTO Results(date, serverId, spikeNum, eventNum, finsished) VALUES(?,?,?,?,?)',(day_sep,1,spikes,events,1))
-					con.commit()
+						try:
+							#Download the file
+							ftp.retrbinary('RETR %s' % n, f.write)
+							#Open the file for reading
+							f = open(fname, 'r')
+							ncpu = np.array([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfCPU", l)])
+							f.seek(0) #Return f to the top of the file
+							nmem = np.array([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match('HOST-RESOURCES-MIB::hrSWRunPerfMem', l)])
+							#Find zscores of each value relative to the mean and std. dev.
+							zcpu = stats.zscore(ncpu)
+							zmem = stats.zscore(nmem)
+							#Get the position of the values where the abs. zscore is greater than 2.5 (~97%)
+							hcpu = [x for x,y in enumerate(zcpu) if (np.absolute(y) >= 2.5)]
+							hmem = [x for x,y in enumerate(zmem) if (np.absolute(y) >= 2.5)]
+							#Get where the values for each catagory are within the ~97%
+							spikes = spikes + len([x for x in hcpu if hmem.count(x) != 0])
+							print "Spikes: {}".format(spikes)
+							if len(ncpu) != len(nmem): #Curious to see if there are any files where the number of memory and cpu perf differs
+								log.info('Length of values in memory and cpu are not identical in file: {}'.format(n))					
+						except Exception as e:
+							log.warning('Error: {} file: {}'.format(e,n))
+							#Clean up file, ready for next
+							os.remove(fname)
+				#Deal with events information
+				res = url.urlopen('http://data.gdeltproject.org/events/index.html').read().split('<LI>')[4:]
+				fil = [x for x in res if (day_pln in x)][0].split('>')[1].split('<')[0]
+				#Download events file
+				dwnlod = url.urlopen('http://data.gdeltproject.org/events/'+fil)
+				with open('/tmp/' + fil, 'w+') as f:
+					f.write(dwnlod.read())
+				with z.ZipFile('/tmp/'+fil) as zf:
+					zf.extractall('/tmp/')
+				#Get all the lines that match
+				events = len([x for x in open('/tmp/'+day_pln+'.export.CSV') if (re.search('Netherlands', x))])
+				#Store results
+				cur.execute('INSERT INTO Results(date, serverId, spikeNum, eventNum, finsished) VALUES(?,?,?,?,?)',(day_sep,1,spikes,events,1))
+				con.commit()
 				con.close()
 				ftp.quit()
 				log.info('Processing finished.')
