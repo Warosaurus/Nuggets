@@ -60,7 +60,7 @@ class Process:
 							hcpu = [x for x,y in enumerate(zcpu) if (np.absolute(y) >= 2.5)]
 							hmem = [x for x,y in enumerate(zmem) if (np.absolute(y) >= 2.5)]
 							#Get where the values for each catagory are within the ~97%
-							spikes = spikes + len([x for x in hcpu if hmem.count(x) != 0])
+							spikes = spikes + len([x for x in hcpu if x in hmem])
 							print "Spikes: {}".format(spikes)
 							if len(ncpu) != len(nmem): #Curious to see if there are any files where the number of memory and cpu perf differs
 								log.info('Length of values in memory and cpu are not identical in file: {}'.format(n))					
