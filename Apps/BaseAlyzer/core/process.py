@@ -1,9 +1,10 @@
-#@Author Warosaurus
+#  @Author Warosaurus
 
-#ZScore example:
-#Source: http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.mstats.zscore.html
+# ZScore example:
+# Source: http://www.wikihow.com/Calculate-Z-Scores
 
-import os, re
+import os
+import re
 import sqlite3 as sql
 import logging as log
 import numpy as np
@@ -13,81 +14,96 @@ import urllib2 as url
 import datetime as dt
 import zipfile as z
 
-class Process:
-	def __init__(self):
-		pass
+# Helper methods
 
-	def run(self, conf):
-		log.basicConfig(filename='log.log',level=log.DEBUG,format='%(asctime)s %(message)s',datefmt='%d/%m/%Y %I:%M:%S')
-		if conf.i and conf.u and conf.p:
-			if os.path.isfile(conf.db):
-				#Create db connection and cursor object
-				con = sql.connect(conf.db)
-				cur = con.cursor()
-				#Create ftp connection and login
-				ftp = FTP(conf.i)
-				ftp.login(conf.u, conf.p)
-				#Let's begin!
-				#Get date yesterday 5
-				dayz = [str(dt.date.today() - dt.timedelta(days=x)) for x in list(reversed(range(2,7)))] #Test
-				ftp.cwd("datatransport/host01/")
-				fname = '/tmp/temp.txt'
-				for day_sep in dayz:
-					print day_sep
-#					day_sep = str(dt.date.today() - dt.timedelta(days=1))
-					day_pln = day_sep.replace('-','')
-					#Change ftp directory *host01*
-					#Get list of files to be processed
-					flist = [x for x in ftp.nlst()[2:] if re.search(day_sep,x)]
-					#Process the files
-					spikes = 0
-					log.info('Starting processing for {}.'.format(day_sep))
-					for n in flist:
-						print (n)
-						f = open(fname, 'w+')
-						try:
-							#Download the file
-							ftp.retrbinary('RETR %s' % n, f.write)
-							#Open the file for reading
-							f = open(fname, 'r')
-							ncpu = np.array([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfCPU", l)])
-							f.seek(0) #Return f to the top of the file
-							nmem = np.array([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match('HOST-RESOURCES-MIB::hrSWRunPerfMem', l)])
-							#Find zscores of each value relative to the mean and std. dev.
-							zcpu = stats.zscore(ncpu)
-							zmem = stats.zscore(nmem)
-							#Get the position of the values where the abs. zscore is greater than 2.5 (~97%)
-							hcpu = [x for x,y in enumerate(zcpu) if (np.absolute(y) >= 2.5)]
-							hmem = [x for x,y in enumerate(zmem) if (np.absolute(y) >= 2.5)]
-							#Get where the values for each catagory are within the ~97%
-							spikes = spikes + len([x for x in hcpu if x in hmem])
-							print "Spikes: {}".format(spikes)
-							if len(ncpu) != len(nmem): #Curious to see if there are any files where the number of memory and cpu perf differs
-								log.info('Length of values in memory and cpu are not identical in file: {}'.format(n))					
-						except Exception as e:
-							log.warning('Error: {} file: {}'.format(e,n))
-							#Clean up file, ready for next
-							os.remove(fname)
-				#Deal with events information
-				res = url.urlopen('http://data.gdeltproject.org/events/index.html').read().split('<LI>')[4:]
-				fil = [x for x in res if (day_pln in x)][0].split('>')[1].split('<')[0]
-				#Download events file
-				dwnlod = url.urlopen('http://data.gdeltproject.org/events/'+fil)
-				with open('/tmp/' + fil, 'w+') as f:
-					f.write(dwnlod.read())
-				with z.ZipFile('/tmp/'+fil) as zf:
-					zf.extractall('/tmp/')
-				#Get all the lines that match
-				events = len([x for x in open('/tmp/'+day_pln+'.export.CSV') if (re.search('Netherlands', x))])
-				#Store results
-				cur.execute('INSERT INTO Results(date, serverId, spikeNum, eventNum, finsished) VALUES(?,?,?,?,?)',(day_sep,1,spikes,events,1))
-				con.commit()
-				con.close()
-				ftp.quit()
-				log.info('Processing finished.')
-			else:
-				log.warning('Database could not be found.')
-				print ("Please view the logs.")
+# Create a database connection and reutrn it
+def db_init(db_location, db_schema):
+	con = sql.connect(db_location)
+	con.cursor().executescript(open(db_schema, "r").read()) # Pass sql file, execute and commit
+	return con # Return cursor object
+
+# Create a ftp connection and reutrn it
+def ftp_init(ftp_ip, ftp_username, ftp_password):
+	return FTP(ftp_ip).login(ftp_username, ftp_password)
+
+class Process:
+	def __init__(self, conf):
+		self.conf = conf
+		if self.conf.ftp_ip and self.conf.ftp_username and self.conf.ftp_password:
+			self.run()
 		else:
 			log.warning('Configuration could not be created')
 			print ("Please view the logs.")
+
+	# Private methods
+	# Public mathods
+	def run(self):
+		log.basicConfig(filename='log.log', level=log.DEBUG, format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S')
+		# Create db connection and cursor object
+		con = db_init(self.conf.db_dir, self.conf.db_schema)
+		cur = con.cursor()
+		# Create ftp connection and login
+		ftp = ftp_init(self.conf.ftp_ip,self.conf.ftp_username, self.conf.ftp_password)
+		# Change ftp directory
+		ftp.cwd("datatransport/host01/")
+ 		# Let's begin!
+		# Get date yesterdate
+		date_sep = str(dt.date.todate() - dt.timedelta(dates=1))
+		date_pln = date_sep.replace('-', '')
+		spikes = 0
+		events = 0
+		# Download all the files for yesterdate
+		try:
+			flist = [x for x in ftp.nlst()[2:] if re.search(date_sep, x)]
+			for x in flist:
+				print x # Testing
+				with open(conf.files_dir + x, "w+") as f:  # With implies close after loop
+					ftp.retrbinary('RETR %s' % n, f.write)
+			# Get a list of the files from the directory that matches the date
+			flist_dir = [x for x in os.listdir(conf.files_dir) if re.search(date_sep, x)]
+			# Baseline first 30 files
+			n = 30 # Step at which the window is moved
+			start = 0
+			end = n
+			if (end < len(flist_dir) + 1): # Base line + 1
+				while (end < len(flist_dir) - 1): # Needs testing here
+					sumCPUn = np.array([])
+					sumMemn = np.array([])
+					for x in range(start ,end):
+						with open(conf.files_dir + flist_dir[x], 'r') as  f:
+							sumCPUn.append(sum([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfCPU", l)]))
+							sumMemn.append(sum([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfMem", l)]))
+					meanCPU = np.mean(sumCPUn)
+					meanMem = np.mean(sumMemn)
+					stddCPU = np.std(sumCPUn)
+					stddMem = np.std(sumMemn)
+					# Get next file
+					with open(conf.files_dir + flist_dir[end+1], 'r') as f:
+						sumCPUnn = sum([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfCPU", l)])
+						sumMemnn = sum([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfMem", l)])
+					zscoreCPU = (sumCPUnn - meanCPU)/stddCPU
+					zscoreMem = (sumMemnn - meanMem)/stddMem
+					if ((abs(zscoreCPU) => 2.5) && (abs(zscoreMem) => 2.5)):
+						spikes = spikes + 1
+					start = start + 1
+					end = end + 1 # Get next file
+			else:
+				log.warning('Error: Not enough files to process - date: {}'.format(date_pln))
+			# Deal with events information
+			res = url.urlopen('http://data.gdeltproject.org/events/index.html').read().split('<LI>')[4:]
+			fil = [x for x in res if (date_pln in x)][0].split('>')[1].split('<')[0]
+			# Download events file
+			dwnlod = url.urlopen('http://data.gdeltproject.org/events/' + fil)
+			with open(conf.files_dir + fil, 'w+') as f:
+				f.write(dwnlod.read())
+			with z.ZipFile(conf.files_dir + fil) as zf:
+				zf.extractall(conf.files_dir)
+			# Get all the lines that match
+			events = len([x for x in open(conf.files_dir + date_pln + '.export.CSV') if (re.search('Netherlands', x))])
+			# Store the results
+			with con.cursor() as cur:
+				cur.execute('INSERT INTO Results(date, serverId, spikeNum, eventNum, finsished) VALUES(?,?,?,?,?)',	(date_sep, spikes, events))
+			con.commit()
+		except Exception as e:
+			log.warning('Error: {} file: {}'.format(e, x))
+		log.info('Processing finished.')

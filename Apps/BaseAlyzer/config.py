@@ -1,15 +1,18 @@
 #!/usr/bin/env python
-#@Author Warosaurus
+# @Author Warosaurus
 
 import os.path
+import logging as log
 
 class Config:
 	def __init__(self):
-		self.i, self.u, self.p = "","","" #Defaults
-		self.db = "/var/db/base.db"
-		self.plot = '../../Plot'
+		self.ftp_ip, self.ftp_username, self.ftp_password = "","","" #Defaults
+		self.db_dir = "/var/db/base.db"
+		self.db_schema = "schema.sql"
+		self.files_dir = "/var/db/files/"
+		self.plot_dir = '../../Plot'
 		if os.path.isfile(".auth"):
-			f = open(".auth", "r").readlines()
-			self.i = f[0].split(':')[1].strip()
-			self.u = f[1].split(':')[1].strip()
-			self.p = f[2].split(':')[1].strip()
+			f = open(".auth", 'r').readlines()
+			self.ftp_ip = f[0].split(':')[1].strip()
+			self.ftp_username = f[1].split(':')[1].strip()
+			self.ftp_password = f[2].split(':')[1].strip()

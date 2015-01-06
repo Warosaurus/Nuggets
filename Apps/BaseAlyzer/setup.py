@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     #Application name
-    name='funniest',
+    name='BaseAlyzer',
     
     #Version number
     version='0.1',
@@ -27,5 +27,5 @@ setup(
         "ftplib",
     ]
     
-    zip_safe=False
+    # zip_safe=False
 )

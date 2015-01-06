@@ -1,4 +1,0 @@
-#Ignore .auth
-.auth
-*.log
-*.pyc

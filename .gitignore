@@ -1,0 +1,6 @@
+# Files ignore
+*.auth
+*.log
+*.pyc
+*.idea
+*.db
