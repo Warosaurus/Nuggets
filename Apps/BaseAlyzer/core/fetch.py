@@ -4,7 +4,7 @@ from ftplib import FTP
 
 
 # Create a ftp connection and reutrn it
-def ftp_init(files_dir, ftp_ip, ftp_username, ftp_password):
+def ftp_init(ftp_ip, ftp_username, ftp_password):
 	ftp = FTP(ftp_ip)
 	ftp.login(ftp_username, ftp_password)
 	return ftp
@@ -15,10 +15,11 @@ class Fetch:
 		self.download(date, files_dir, ftp_settings)
 
 	def download(self, date, files_dir, ftp_settings):
-		ftp = ftp_init(files_dir, ftp_settings[0], ftp_settings[1], ftp_settings[2])
+		ftp = ftp_init(ftp_settings[0], ftp_settings[1], ftp_settings[2])
 		ftp.cwd("datatransport/host01/")
-		flist = ftp.nlst()[2:]
+		flist_ftp = ftp.nlst()[2:]
 		flist_dir = []
+		flist = []
 		# Has the date been archived
 		if (date + '.tgz') in flist:
 			print "Downloading : {}".format(date + '.tgz')
