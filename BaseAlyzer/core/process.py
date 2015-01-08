@@ -18,7 +18,7 @@ def _db_init(db_location, db_schema):
 	return con  # Return connection object
 
 
-def _extract(date, files_dir):
+def _extract(files_dir, date):
 	with tarfile.open(files_dir + date + ".tgz", "r") as tar:
 		tar.extractall(files_dir + "tmp/")
 
