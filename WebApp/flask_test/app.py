@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def getplots():
-    plots = [(x ,str("static/Plot/" + x)) for x in os.listdir("static/Plot")]
+    plots = [(x ,str("../../files/plot/" + x)) for x in os.listdir("static/Plot")]
     return render_template("template.html", plots=plots)
 
 if __name__ == "__main__":

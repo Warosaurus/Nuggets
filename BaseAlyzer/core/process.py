@@ -77,7 +77,8 @@ class Process:
 				end += 1
 				cur.execute("INSERT INTO Scores(date, zcpu, zmem) VALUES(?,?,?)", (date, zscorecpu, zscoremem))
 				con.commit()
-			events = len([x for x in open(files_dir + "tmp/" + date.replace('-', '') + '.export.CSV') if (re.search("Netherlands", x))])
+			# events = len([x for x in open(files_dir + "tmp/" + date.replace('-', '') + '.export.CSV') if (re.search("Netherlands", x))])
+			events = 0
 			# # Store the results
 			cur.execute('INSERT INTO Results(date, spikeNum, eventNum) VALUES(?,?,?)', (date, spikes, events))
 			con.commit()

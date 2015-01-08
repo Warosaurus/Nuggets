@@ -10,8 +10,9 @@ if __name__ == "__main__":
 	date_s = dt.date(2014, 12, 11)
 	date_e = dt.date(2015, 01, 05)
 	days = [str((date_s + dt.timedelta(days=x))) for x in range((date_e - date_s).days + 1)]
+	days = days[0]
 	c = Config()
 	for day in days:
-		Process(c, day)
-	# v = Visualize()
+		# Process(c, day)
+		Visualize(c.db_dir, day)
 	# v.run(c.db, c.plot)  # Pass configuration db location

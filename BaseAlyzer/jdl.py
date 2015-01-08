@@ -20,11 +20,11 @@ def justdownload():
     day_arc = [day for day in days if (day + ".tgz" in flist_ftp)]
     # Exclude the archived files
     day_nor = [day for day in days if (day not in day_arc)]
-    for day in day_arc:
-        print "Downloading : {}".format(day + '.tgz')
-        # Download archive
-        with open(file_dir + day + '.tgz', "w+") as f:  # With implies close after scope
-            ftp.retrbinary('RETR %s' % day + '.tgz', f.write)
+    # for day in day_arc:
+    #     print "Downloading : {}".format(day + '.tgz')
+    #     # Download archive
+    #     with open(file_dir + day + '.tgz', "w+") as f:  # With implies close after scope
+    #         ftp.retrbinary('RETR %s' % day + '.tgz', f.write)
     for day in day_nor:
         flist = [x for x in ftp.nlst()[2:] if (x[:len(day)] == day)]
         with tarfile.open(file_dir + day + ".tgz", "w:tgz") as tar:
