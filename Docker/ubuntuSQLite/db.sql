@@ -1,7 +1,0 @@
-CREATE TABLE Results (
-  pk 			INTEGER PRIMARY KEY AUTOINCREMENT,
-  date 		TEXT	NOT NULL,
-  serverId 	INTEGER	NOT NULL,
-  spikes   	INTEGER	NOT NULL,
-  events   	INTEGER	NOT NULL
-);
