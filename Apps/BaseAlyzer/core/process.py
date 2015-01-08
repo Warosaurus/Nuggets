@@ -27,6 +27,7 @@ class Process:
 		#  Let's begin!
 		# Create db connection
 		con = _db_init(self.conf.db_dir, self.conf.db_schema)
+		cur = con.cursor()
 		# try:
 		# Baseline first 30 files
 		n = 30  # Step at which the window is moved
@@ -37,7 +38,7 @@ class Process:
 		flist_dir.sort()
 		if end < len(flist_dir) + 1:  # Base line + 1
 			spikes = 0
-			while end < len(flist_dir) - 1:  # Needs testing here
+			while end < len(flist_dir) - 1:
 				sumcpun = []
 				summemn = []
 				for x in range(start, end):
@@ -56,19 +57,17 @@ class Process:
 					summemnn = sum([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfMem", l)])
 				zscorecpu = (sumcpunn - meancpu) / stddcpu
 				zscoremem = (summemnn - meanmem) / stddmem
-				print "zscorecpu : %.2f" % zscorecpu
-				print "zscoremem : %.2f" % zscoremem
 				if (abs(zscorecpu) > 2.5) and (abs(zscoremem) > 2.5):
 					spikes += 1
 				#  Shift window by 1
 				start += 1
 				end += 1
-				print "spikes : {}".format(spikes)
-			# events = len([x for x in open(files_dir + date.replace('-', '') + '.export.CSV') if (re.search("Netherlands", x))])
+				cur.execute("INSERT INTO Scores(date, zcpu, zmem) VALUES(?,?,?)", (date, zscorecpu, zscoremem))
+				con.commit()
+			events = len([x for x in open(files_dir + date.replace('-', '') + '.export.CSV') if (re.search("Netherlands", x))])
 			# # Store the results
-			# with con.cursor() as cur:
-			# 	cur.execute('INSERT INTO Results(date, spikeNum, eventNum) VALUES(?,?,?)', (date, spikes, events))
-			# con.commit()
+			cur.execute('INSERT INTO Results(date, spikeNum, eventNum) VALUES(?,?,?)', (date, spikes, events))
+			con.commit()
 		else:
 			log.warning('Error: Not enough files to process date: {}'.format(date))
 		con.close()
