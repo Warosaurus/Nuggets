@@ -1,18 +1,70 @@
 import os
+import re
 import tarfile
+import shutil
 from ftplib import FTP
 
 
 # Create a ftp connection and reutrn it
-def ftp_init(ftp_ip, ftp_username, ftp_password):
+def _ftp_init(ftp_ip, ftp_username, ftp_password):
 	ftp = FTP(ftp_ip)
 	ftp.login(ftp_username, ftp_password)
 	return ftp
 
 
+# Clean up directory
+def _clean(dir_file):
+	flist = os.listdir(dir_file)
+	for x in flist:
+		try:
+			os.remove(dir_file + x)
+		except Exception as e:
+			print "Error: {}".format(e)
+
 class Fetch:
-	def __init__(self, date, files_dir, ftp_settings):
-		self.download(date, files_dir, ftp_settings)
+	def __init__(self, date):
+		self.download(date, self.files_dir, self.ftp_settings)
+
+	def fetch(self, date, dir_dwl, dir_arc):
+		# Is the date achived locally?
+		# No:
+		if not os.listdir(dir_arc).__contains__(date + ".tgz"):
+			ftp = _ftp_init()
+			ftp.cwd("datatransport/host01/")
+			# Is there an archived version on the ftp?
+			# Yes:
+			if ftp.nlst(".").__contains__(date + ".tgz"):
+				# Download the file then once downloaded move it to the archived dir
+				try:
+					with open(dir_dwl + date + ".tgz") as f:
+						ftp.retrbinary('RETR %s' % date + ".tgz", f.write)
+						shutil.move(dir_dwl, dir_arc)
+				except Exception as e:
+					print "Error with file: {}, reason: {}".format(date + ".tgz", e)
+			# No:
+			# Are the files on the ftp for that day?
+			elif len([x for x in ftp.nlst(".") if re.match(date, x)]).__sizeof__() > 30:
+				# Yes
+				fl_lst = [x for x in ftp.nlst(".") if re.match(date, x)]
+				# Download those files
+				for fl in fl_lst:
+					print "downloading file : {}".format(fl)  # Testing
+					with open(dir_dwl + fl, "w+") as f:  # With implies close after scope
+						ftp.retrbinary('RETR %s' % fl, f.write)
+				# Write them to and archive
+				try:
+					with tarfile.open(dir_arc + date + ".tgz", "w:gz") as tf:
+						for fl in fl_lst:
+							print "Archiving file : {} into: {}".format(fl, date + ".tgz")
+							tf.add(dir_dwl + fl)
+				except Exception as e:
+					print "Error: {}".format(e)
+			if not os.listdir(dir_arc).__contains__()
+		_clean(dir_dwl)
+		# Is the events info archived locally?
+		# yes:
+		# no : downlaod those files
+		pass
 
 	def download(self, date, files_dir, ftp_settings):
 		ftp = ftp_init(ftp_settings[0], ftp_settings[1], ftp_settings[2])
@@ -47,7 +99,7 @@ class Fetch:
 		# # Deal with events information
 		# res = url.urlopen('http://data.gdeltproject.org/events/index.html').read().split('<LI>')[4:]
 		# fil = [x for x in res if (date_pln in x)][0].split('>')[1].split('<')[0]
-		# # Download events file
+		# # Download events fil
 		# dwnlod = url.urlopen('http://data.gdeltproject.org/events/' + fil)
 		# with open(files_dir + fil, 'w+') as f:
 		# 	f.write(dwnlod.read())

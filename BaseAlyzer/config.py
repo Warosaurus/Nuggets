@@ -10,6 +10,7 @@ class Config:
 		self.ftp_ip, self.ftp_username, self.ftp_password = "", "", ""  # Defaults
 		self.db_dir = "../files/db/base.db"
 		self.files_dir = "../files/ftp/"
+		self.dir_dwl = "../files/downloads"
 		self.plot_dir = '../WebApp/flask_test/static/Plot'
 		self.db_schema = "schema.sql"
 		if os.path.isfile(".auth"):
