@@ -64,7 +64,7 @@ def _fetch(dir_dwl, dir_arc, ftp_i, ftp_u, ftp_p, date):
 	# No:
 	if fl_events not in os.listdir(dir_arc):
 		# Get it from the site
-		print "Downloading : {}".format(fl_events)
+		print "Downloading: {}".format(fl_events)
 		url_dwl = urllib2.urlopen('http://data.gdeltproject.org/events/' + fl_events)
 		with open(dir_arc + fl_events, 'w+') as f:
 			f.write(url_dwl.read())

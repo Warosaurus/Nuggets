@@ -9,6 +9,7 @@ import sqlite3 as sql
 import logging as log
 import numpy as np
 import tarfile
+import zipfile
 
 
 # Create a database connection and reutrn it
@@ -18,9 +19,13 @@ def _db_init(dir_dbs, dbs_schema):
 	return con  # Return connection object
 
 
-def _extract(dir_arc, dir_tmp, date):
-	with tarfile.open(dir_arc + date + ".tgz", "r") as tar:
-		tar.extractall(dir_tmp)
+def _extract(dir_arc, dir_tmp, date, fl_t):
+	if fl_t == ".tgz":
+		with tarfile.open(dir_arc + date + ".tgz", "r") as tar:
+			tar.extractall(dir_tmp)
+	elif fl_t == ".zip":
+		with zipfile.ZipFile.open(dir_arc + date + ".zip", "r") as zf:
+			zf.exractall(dir_tmp)
 
 
 def _clean_tmp(dir_tmp):
@@ -35,7 +40,7 @@ def _clean_tmp(dir_tmp):
 def _process(dir_arc, dir_tmp, dir_dbs, dbs_schema, date):
 	log.basicConfig(filename='log.log', level=log.DEBUG, format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S')
 	#  Let's begin!
-	_extract(dir_arc, dir_tmp, date)
+	_extract(dir_arc, dir_tmp, date, ".tgz")
 	# Create db connection
 	con = _db_init(dir_dbs, dbs_schema)
 	cur = con.cursor()
@@ -84,6 +89,7 @@ def _process(dir_arc, dir_tmp, dir_dbs, dbs_schema, date):
 			end += 1
 			cur.execute("INSERT INTO Scores(date, zcpu, zmem) VALUES(?,?,?)", (date, cpu_zscore, mem_zscore))
 			con.commit()
+		_extract(dir_arc, dir_tmp, date, ".zip")
 		events = len([x for x in open(dir_arc + "tmp/" + date.replace('-', '') + '.export.CSV') if (re.search("Netherlands", x))])
 		# # Store the results
 		cur.execute('INSERT INTO Results(date, spikeNum, eventNum) VALUES(?,?,?)', (date, spikes, events))
