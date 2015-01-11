@@ -18,8 +18,8 @@ def _db_init(dir_dbs, dbs_schema):
 	return con  # Return connection object
 
 
-def _extract(dir_files, dir_tmp, date):
-	with tarfile.open(dir_files + date + ".tgz", "r") as tar:
+def _extract(dir_arc, dir_tmp, date):
+	with tarfile.open(dir_arc + date + ".tgz", "r") as tar:
 		tar.extractall(dir_tmp)
 
 
@@ -32,11 +32,10 @@ def _clean_tmp(dir_tmp):
 			print "Error: {}".format(e)
 
 
-def _process(dir_fls, dir_dbs, dbs_schema, date):
+def _process(dir_arc, dir_tmp, dir_dbs, dbs_schema, date):
 	log.basicConfig(filename='log.log', level=log.DEBUG, format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S')
 	#  Let's begin!
-	dir_tmp = dir_fls + "tmp/"
-	_extract(dir_fls, dir_tmp, date)
+	_extract(dir_arc, dir_tmp, date)
 	# Create db connection
 	con = _db_init(dir_dbs, dbs_schema)
 	cur = con.cursor()
@@ -73,7 +72,7 @@ def _process(dir_fls, dir_dbs, dbs_schema, date):
 			# Calculate the z-score for the
 			cpu_zscore = (cpu_next - cpu_mean) / cpu_std
 			mem_zscore = (mem_next - mem_mean) / mem_std
-			if (abs(cpu_zscore) > 2.5) or (abs(mem_zscore) > 2.5):  # Like I suggested if either the memory or cpu spikes..
+			if abs(mem_zscore) > 2.5:
 				spikes += 1
 			# Shift window by 1
 			# Thanks to Vera for pointing this out
@@ -85,8 +84,7 @@ def _process(dir_fls, dir_dbs, dbs_schema, date):
 			end += 1
 			cur.execute("INSERT INTO Scores(date, zcpu, zmem) VALUES(?,?,?)", (date, cpu_zscore, mem_zscore))
 			con.commit()
-		# events = len([x for x in open(dir_fls + "tmp/" + date.replace('-', '') + '.export.CSV') if (re.search("Netherlands", x))])
-		events = 0
+		events = len([x for x in open(dir_arc + "tmp/" + date.replace('-', '') + '.export.CSV') if (re.search("Netherlands", x))])
 		# # Store the results
 		cur.execute('INSERT INTO Results(date, spikeNum, eventNum) VALUES(?,?,?)', (date, spikes, events))
 		con.commit()
@@ -103,5 +101,5 @@ def _process(dir_fls, dir_dbs, dbs_schema, date):
 
 class Process:
 	def __init__(self, conf, date):
-		_process(conf.dir_fls, conf.dir_dbs, conf.dbs_schema, date)
+		_process(conf.dir_arc, conf.dir_tmp, conf.dir_dbs, conf.dbs_schema, date)
 
