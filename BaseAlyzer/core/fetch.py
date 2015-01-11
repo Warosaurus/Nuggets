@@ -14,11 +14,11 @@ def _ftp_init(ftp_i, ftp_u, ftp_p):
 
 
 # Clean up directory
-def _clean(dir_file):
-	flist = os.listdir(dir_file)
+def _clean(dir_dwl):
+	flist = os.listdir(dir_dwl)
 	for x in flist:
 		try:
-			os.remove(dir_file + x)
+			os.remove(dir_dwl + x)
 		except Exception as e:
 			print "Error: {}".format(e)
 
@@ -37,7 +37,7 @@ def _fetch(dir_dwl, dir_arc, ftp_i, ftp_u, ftp_p, date):
 			print "Downloading: {}".format(date + ".tgz")
 			with open(dir_dwl + date + ".tgz", "w+") as f:
 				ftp.retrbinary('RETR %s' % date + ".tgz", f.write)
-				shutil.move(dir_dwl, dir_arc)
+				shutil.move(dir_dwl + date + ".tgz", dir_arc)
 			# except Exception as e:
 			# 	print "Error with file: {}, reason: {}".format(date + ".tgz", e)
 		# No:

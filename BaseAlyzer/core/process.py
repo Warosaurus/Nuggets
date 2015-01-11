@@ -27,7 +27,7 @@ def _clean_tmp(dir_tmp):
 	flist = os.listdir(dir_tmp)
 	for x in flist:
 		try:
-			os.remove(x)
+			os.remove(dir_tmp + x)
 		except Exception as e:
 			print "Error: {}".format(e)
 
