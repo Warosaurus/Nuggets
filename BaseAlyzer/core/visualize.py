@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#@Author Warosaurus
+# @Author Warosaurus
 
 import numpy as np
 import sqlite3 as sql

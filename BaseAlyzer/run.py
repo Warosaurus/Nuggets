@@ -13,7 +13,7 @@ if __name__ == "__main__":
 	days = days[:1]
 	c = Config()
 	for day in days:
-		Fetch(c)
+		Fetch(c, day)
 		Process(c, day)
-		Visualize(c.db_dir, day)
+		Visualize(c.dir_dbs, day)
 	# v.run(c.db, c.plot)  # Pass configuration db location

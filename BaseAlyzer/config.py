@@ -8,11 +8,14 @@ import logging as log
 class Config:
 	def __init__(self):
 		self.ftp_ip, self.ftp_username, self.ftp_password = "", "", ""  # Defaults
-		self.db_dir = "../files/db/base.db"
-		self.files_dir = "../files/ftp/"
+		self.dir_dbs = "../files/db/base.db"
+		self.dir_fls = "../files/ftp/"
+		self.dir_arc = "../files/archived"
 		self.dir_dwl = "../files/downloads"
-		self.plot_dir = '../WebApp/flask_test/static/Plot'
-		self.db_schema = "schema.sql"
+		self.dir_plot = '../WebApp/flask_test/static/Plot'
+		# Database Schema
+		self.dbs_schema = "schema.sql"
+		# Get ftp settings from .auth file
 		if os.path.isfile(".auth"):
 			f = open(".auth", 'r').readlines()
 			self.ftp_ip = f[0].split(':')[1].strip()
