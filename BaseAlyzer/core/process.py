@@ -88,7 +88,6 @@ def _process(dir_arc, dir_tmp, dir_dbs, dbs_schema, date):
 			start += 1
 			end += 1
 			cur.execute("INSERT INTO Scores(date, zcpu, zmem) VALUES(?,?,?)", (date, cpu_zscore, mem_zscore))
-			con.commit()
 		_extract(dir_arc, dir_tmp, date, ".zip")
 		events = len([x for x in open(dir_arc + "tmp/" + date.replace('-', '') + '.export.CSV') if (re.search("Netherlands", x))])
 		# # Store the results
