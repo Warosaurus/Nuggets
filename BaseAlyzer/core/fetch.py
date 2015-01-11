@@ -35,7 +35,7 @@ def _fetch(dir_dwl, dir_arc, ftp_i, ftp_u, ftp_p, date):
 			# Download the file then once downloaded move it to the archived dir
 			# 	try:
 			print "Downloading: {}".format(date + ".tgz")
-			with open(dir_dwl + date + ".tgz") as f:
+			with open(dir_dwl + date + ".tgz", "w+") as f:
 				ftp.retrbinary('RETR %s' % date + ".tgz", f.write)
 				shutil.move(dir_dwl, dir_arc)
 			# except Exception as e:
