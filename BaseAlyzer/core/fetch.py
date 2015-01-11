@@ -33,20 +33,21 @@ def _fetch(dir_dwl, dir_arc, ftp_i, ftp_u, ftp_p, date):
 		# Yes:
 		if (date + ".tgz") in ftp.nlst("."):
 			# Download the file then once downloaded move it to the archived dir
-			try:
-				with open(dir_dwl + date + ".tgz") as f:
-					ftp.retrbinary('RETR %s' % date + ".tgz", f.write)
-					shutil.move(dir_dwl, dir_arc)
-			except Exception as e:
-				print "Error with file: {}, reason: {}".format(date + ".tgz", e)
+			# 	try:
+			print "Downloading: {}".format(date + ".tgz")
+			with open(dir_dwl + date + ".tgz") as f:
+				ftp.retrbinary('RETR %s' % date + ".tgz", f.write)
+				shutil.move(dir_dwl, dir_arc)
+			# except Exception as e:
+			# 	print "Error with file: {}, reason: {}".format(date + ".tgz", e)
 		# No:
 		# Are the files on the ftp for that day?
-		elif len([x for x in ftp.nlst(".") if re.match(date, x)]).__sizeof__() > 30:
+		elif len([x for x in ftp.nlst(".") if re.match(date, x)]) > 30:
 			# Yes
 			fl_lst = [x for x in ftp.nlst(".") if re.match(date, x)]
 			# Download those files
 			for fl in fl_lst:
-				print "downloading file : {}".format(fl)  # Testing
+				print "Downloading : {}".format(fl)  # Testing
 				with open(dir_dwl + fl, "w+") as f:  # With implies close after scope
 					ftp.retrbinary('RETR %s' % fl, f.write)
 			# Write them to and archive
@@ -63,6 +64,7 @@ def _fetch(dir_dwl, dir_arc, ftp_i, ftp_u, ftp_p, date):
 	# No:
 	if fl_events not in os.listdir(dir_arc):
 		# Get it from the site
+		print "Downloading : {}".format(fl_events)
 		url_dwl = urllib2.urlopen('http://data.gdeltproject.org/events/' + fl_events)
 		with open(dir_arc + fl_events, 'w+') as f:
 			f.write(url_dwl.read())
