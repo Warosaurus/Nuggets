@@ -14,6 +14,9 @@ import zipfile
 
 # Create a database connection and reutrn it
 def _db_init(dir_dbs, dbs_schema):
+	# If the database directory does not exist, create it.
+	if not os.path.exists(dir_dbs):
+		os.makedirs(dir_dbs)
 	con = sql.connect(dir_dbs)
 	con.cursor().executescript(open(dbs_schema, "r").read())  # Pass sql file, execute and commit
 	return con  # Return connection object
@@ -24,8 +27,8 @@ def _extract(dir_arc, dir_tmp, date, fl_t):
 		with tarfile.open(dir_arc + date + ".tgz", "r") as tar:
 			tar.extractall(dir_tmp)
 	elif fl_t == ".zip":
-		with zipfile.ZipFile.open(dir_arc + date + ".zip", "r") as zf:
-			zf.exractall(dir_tmp)
+		with zipfile.ZipFile(dir_arc + date.replace('-', '') + ".export.CSV.zip", "r") as zf:
+			zf.extractall(dir_tmp)
 
 
 def _clean_tmp(dir_tmp):
@@ -54,44 +57,33 @@ def _process(dir_arc, dir_tmp, dir_dbs, dbs_schema, date):
 	if end < len(files_lst) + 1:  # Base line + 1
 		log.info("Processing date: {}".format(date))
 		spikes = 0
-		cpu_lst = []
 		mem_lst = []
 		# Build the base line
 		for x in range(start, end):
 			with open(dir_tmp + files_lst[x], 'r') as f:  # With implies close on file object after with block
-				cpu_lst.append(sum([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfCPU", l)]))
-				f.seek(0)  # Reset the cursor to the beginig of the file
 				mem_lst.append(sum([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfMem", l)]))
 		while end < len(files_lst) - 1:
 			# Calculate the mean of the list of sums
-			cpu_mean = np.mean(cpu_lst)
 			mem_mean = np.mean(mem_lst)
 			# Calculate the standard deviation of the list of sums
-			cpu_std = np.std(cpu_lst)
 			mem_std = np.std(mem_lst)
 			# Get the values for the next file (end + 1)
 			with open(dir_tmp + files_lst[end + 1], 'r') as f:
-				cpu_next = sum([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfCPU", l)])
-				f.seek(0)  # Reset the cursor to the beginig of the file
 				mem_next = sum([int(l.split('= ')[1].split(' ')[0]) for l in f if re.match("HOST-RESOURCES-MIB::hrSWRunPerfMem", l)])
-			# Calculate the z-score for the
-			cpu_zscore = (cpu_next - cpu_mean) / cpu_std
+			# Calculate the z-score
 			mem_zscore = (mem_next - mem_mean) / mem_std
 			if abs(mem_zscore) > 2.5:
 				spikes += 1
 			# Shift window by 1
 			# Thanks to Vera for pointing this out
-			cpu_lst = cpu_lst[1:]  # Exclude the first value from the list
-			cpu_lst.append(cpu_next)  # Add the new value
 			mem_lst = mem_lst[1:]
 			mem_lst.append(mem_next)
 			start += 1
 			end += 1
-			cur.execute("INSERT INTO Scores(date, zcpu, zmem) VALUES(?,?,?)", (date, cpu_zscore, mem_zscore))
 		_extract(dir_arc, dir_tmp, date, ".zip")
-		events = len([x for x in open(dir_arc + "tmp/" + date.replace('-', '') + '.export.CSV') if (re.search("Netherlands", x))])
+		events = len([x for x in open(dir_tmp + date.replace('-', '') + '.export.CSV') if (re.search("Netherlands", x))])
 		# # Store the results
-		cur.execute('INSERT INTO Results(date, spikeNum, eventNum) VALUES(?,?,?)', (date, spikes, events))
+		cur.execute('INSERT INTO Results(date, spikes, events) VALUES(?,?,?)', (date, spikes, events))
 		con.commit()
 	else:
 		log.warning('Error: Not enough files to process date: {}'.format(date))

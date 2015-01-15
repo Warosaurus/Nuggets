@@ -4,6 +4,7 @@ import tarfile
 import shutil
 import urllib2
 from ftplib import FTP
+import logging as log
 
 
 # Create a ftp connection and reutrn it
@@ -20,10 +21,16 @@ def _clean(dir_dwl):
 		try:
 			os.remove(dir_dwl + x)
 		except Exception as e:
-			print "Error: {}".format(e)
+			log.warning("Error: {}".format(e))
 
 
 def _fetch(dir_dwl, dir_arc, ftp_i, ftp_u, ftp_p, date):
+	# Init stuff: Create logs, directories
+	log.basicConfig(filename='log.log', level=log.DEBUG, format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S')
+	if not os.path.exists(dir_arc):
+		os.makedirs(dir_dwl)
+	if not os.path.exists(dir_dwl):
+		os.makedirs(dir_dwl)
 	# Is the date achived locally?
 	# No:
 	if (date + ".tgz") not in os.listdir(dir_arc):
@@ -33,13 +40,10 @@ def _fetch(dir_dwl, dir_arc, ftp_i, ftp_u, ftp_p, date):
 		# Yes:
 		if (date + ".tgz") in ftp.nlst("."):
 			# Download the file then once downloaded move it to the archived dir
-			# 	try:
-			print "Downloading: {}".format(date + ".tgz")
+			log.info("Downloading: {}".format(date + ".tgz"))
 			with open(dir_dwl + date + ".tgz", "w+") as f:
 				ftp.retrbinary('RETR %s' % date + ".tgz", f.write)
 				shutil.move(dir_dwl + date + ".tgz", dir_arc)
-			# except Exception as e:
-			# 	print "Error with file: {}, reason: {}".format(date + ".tgz", e)
 		# No:
 		# Are the files on the ftp for that day?
 		elif len([x for x in ftp.nlst(".") if re.match(date, x)]) > 30:
@@ -47,17 +51,16 @@ def _fetch(dir_dwl, dir_arc, ftp_i, ftp_u, ftp_p, date):
 			fl_lst = [x for x in ftp.nlst(".") if re.match(date, x)]
 			# Download those files
 			for fl in fl_lst:
-				print "Downloading : {}".format(fl)  # Testing
 				with open(dir_dwl + fl, "w+") as f:  # With implies close after scope
 					ftp.retrbinary('RETR %s' % fl, f.write)
 			# Write them to and archive
 			try:
+				log.info("Creating archive: {}".format(dir_arc + date + ".tgz"))
 				with tarfile.open(dir_arc + date + ".tgz", "w:gz") as tf:
 					for fl in fl_lst:
-						print "Archiving file : {} into: {}".format(fl, date + ".tgz")
-						tf.add(dir_dwl + fl)
+						tf.add(dir_dwl + fl, fl)
 			except Exception as e:
-				print "Error: {}".format(e)
+				log.warning("Error: {}".format(e))
 		ftp.quit()  # Done with ftp
 	# Is the events file archived locally?
 	fl_events = date.replace("-", "") + ".export.CSV.zip"
