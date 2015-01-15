@@ -1,31 +1,32 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
-    #Application name
+    # Application name
     name='BaseAlyzer',
     
-    #Version number
+    # Version number
     version='0.1',
 
-    #Author details
+    # Author details
     author='Warwick Brett Louw (Warosaurus)',
     author_email='WarwickBrettLouw@gmail.com',
     
-    #Packages
-    packages=['BaseAlyzer'],
-    
-    #Description *later*
-    description='',
-    
-    #Details
+    # Description
+    description='Code for project big data',
+
+    # Packages
+    packages=find_packages(),
+
+    # Details
     url='http://github.com/Warosaurus/Nuggets',
     
-    #Dependancies
+    # Dependancies
     install_requires=[
         "numpy",
-        "scipy",
-        "ftplib",
-    ]
-    
-    # zip_safe=False
+    ],
+
+    # Package data
+    package_data={
+        '': [".py"],
+    }
 )
